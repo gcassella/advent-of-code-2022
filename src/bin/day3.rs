@@ -103,6 +103,7 @@ fn main() {
 
     let input = fs::read_to_string("day3_1.txt").expect("Error opening file");
     let mut accumulator = 0;
+
     for line in input.split("\r\n") {
         let mut bp = Backpack::from_str(line);
         // Sorting each compartment is O(N)
@@ -115,16 +116,54 @@ fn main() {
         for item in bp.compartment1 {
             let val = priorities[&item];
             let prios = bp.compartment2.iter().map(|x| priorities[x]).collect();
-            let comp2_pos = bisect(
-                prios,
-                val
-            );
+            let comp2_pos = bisect(prios, val);
             match comp2_pos {
-                Some(pos) => { 
-                    accumulator += priorities[&bp.compartment2[pos]];
+                Some(_) => {
+                    accumulator += val;
                     break;
-                },
-                None => continue
+                }
+                None => continue,
+            }
+        }
+    }
+    println!("{}", accumulator);
+
+    let lines = input.split("\r\n").collect::<Vec<&str>>();
+    assert!(lines.len() % 3 == 0);
+    let mut accumulator = 0;
+    for i in 0..lines.len() / 3 {
+        // Init and sort backpacks. No need for compartments here.
+        let mut first_bp: Vec<char> = lines[3 * i].chars().collect();
+        let mut second_bp: Vec<char> = lines[3 * i + 1].chars().collect();
+        let mut third_bp: Vec<char> = lines[3 * i + 2].chars().collect();
+
+        first_bp.sort_by(|a, b| priorities[a].cmp(&priorities[b]));
+        second_bp.sort_by(|a, b| priorities[a].cmp(&priorities[b]));
+        third_bp.sort_by(|a, b| priorities[a].cmp(&priorities[b]));
+        // Find matching items in backpack of second elf
+        let mut matching_items_bp2: Vec<char> = vec![];
+        for item in first_bp {
+            let val = priorities[&item];
+            let prios = second_bp.iter().map(|x| priorities[&x]).collect();
+            let second_bp_pos = bisect(prios, val);
+            match second_bp_pos {
+                Some(_) => {
+                    matching_items_bp2.push(item);
+                }
+                None => continue,
+            }
+        }
+        // Find matching items between backpacks of second and third elf
+        for item in matching_items_bp2 {
+            let val = priorities[&item];
+            let prios = third_bp.iter().map(|x| priorities[&x]).collect();
+            let third_bp_pos = bisect(prios, val);
+            match third_bp_pos {
+                Some(_) => {
+                    accumulator += val;
+                    break;
+                }
+                None => continue,
             }
         }
     }
