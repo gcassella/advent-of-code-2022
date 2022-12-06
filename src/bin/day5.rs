@@ -39,7 +39,10 @@ fn parse_input(filename: &str) -> (Vec<Vec<char>>, io::Lines<io::BufReader<File>
 }
 
 fn print_tops(stacks: &Vec<Vec<char>>) -> () {
-    println!("{}", stacks.iter().map(|x| x.last().unwrap()).collect::<String>());
+    println!(
+        "{}",
+        stacks.iter().map(|x| x.last().unwrap()).collect::<String>()
+    );
 }
 
 fn cratemover_9000(stacks: &mut Vec<Vec<char>>, instruction: String) {
@@ -49,10 +52,9 @@ fn cratemover_9000(stacks: &mut Vec<Vec<char>>, instruction: String) {
         let stack_from = &c[2].parse::<usize>().unwrap();
         let stack_to = &c[3].parse::<usize>().unwrap();
         for _ in 0..*num_to_move {
-            let val = stacks[*stack_from-1].pop().unwrap();
-            stacks[*stack_to-1].push(val);
+            let val = stacks[*stack_from - 1].pop().unwrap();
+            stacks[*stack_to - 1].push(val);
         }
-
     }
 }
 
@@ -62,18 +64,17 @@ fn cratemover_9001(stacks: &mut Vec<Vec<char>>, instruction: String) {
         let num_to_move = &c[1].parse::<usize>().unwrap();
         let stack_from = &c[2].parse::<usize>().unwrap();
         let stack_to = &c[3].parse::<usize>().unwrap();
-        
-        let split_idx = stacks[*stack_from-1].len() - *num_to_move;
-        let move_crates = stacks[*stack_from-1].split_off(split_idx);
-        stacks[*stack_to-1].extend(move_crates);
+
+        let split_idx = stacks[*stack_from - 1].len() - *num_to_move;
+        let move_crates = stacks[*stack_from - 1].split_off(split_idx);
+        stacks[*stack_to - 1].extend(move_crates);
     }
 }
-
 
 fn main() {
     // Part 1
     let (mut stacks, mut lineiter) = parse_input("day5_1.txt");
-    
+
     while let Some(line) = lineiter.next() {
         let line = line.unwrap();
         cratemover_9000(&mut stacks, line);
@@ -81,7 +82,7 @@ fn main() {
     print_tops(&stacks);
     // Part 2
     let (mut stacks, mut lineiter) = parse_input("day5_1.txt");
-    
+
     while let Some(line) = lineiter.next() {
         let line = line.unwrap();
         cratemover_9001(&mut stacks, line);
