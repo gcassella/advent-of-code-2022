@@ -1,9 +1,9 @@
-use std::{env::args, fs, collections::VecDeque};
+use std::{collections::VecDeque, env::args, fs};
 
 /// This week was a fun one. The code I wrote for part 1 was trivially
 /// capable of solving part 2 as well. I added the `message_len` command line
 /// argument to use the same binary for solving both parts.
-/// 
+///
 /// Part 1: `day6.exe 4`
 /// Part 2: `day6.exe 14`
 fn main() {
