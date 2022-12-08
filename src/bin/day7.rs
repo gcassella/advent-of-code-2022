@@ -233,11 +233,22 @@ fn main() {
     // directories
     dir_and_sizes.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
     let mut accumulator = 0;
-    for (_, size) in dir_and_sizes {
-        if size > 100000 {
+    for (_, size) in dir_and_sizes.iter() {
+        if size > &100000 {
             println!("{}", accumulator);
-            return ();
+            break;
         }
         accumulator += size;
-    }
+    } 
+    // Now I need to find the smallest directory which is larger than 3000000
+    // less the current unused space, where the total HDD space is 7000000
+    let curr_size = dir_and_sizes[dir_and_sizes.len()-1].1;
+    let curr_unused_space = 70000000 - curr_size;
+    let space_needed = 30000000 - curr_unused_space;
+    for (_, size) in dir_and_sizes.iter() {
+        if size > &space_needed {
+            println!("{}", size);
+            break;
+        }
+    } 
 }
