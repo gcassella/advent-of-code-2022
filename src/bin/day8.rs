@@ -18,7 +18,10 @@ fn transpose(mat: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
 
 /// Iterate forwards and backwards through each row of the grid, storing the
 /// indices of trees that are visible from either end
-fn count_talltrees_leftright(grid: &Vec<Vec<usize>>, mut preseen: Vec<(usize, usize)>) -> Vec<(usize, usize)> {
+fn count_talltrees_leftright(
+    grid: &Vec<Vec<usize>>,
+    mut preseen: Vec<(usize, usize)>,
+) -> Vec<(usize, usize)> {
     let rowlen = grid[0].len();
     let mut seen: Vec<(usize, usize)> = vec![];
     seen.append(&mut preseen);
@@ -53,7 +56,7 @@ fn count_talltrees_leftright(grid: &Vec<Vec<usize>>, mut preseen: Vec<(usize, us
 fn get_viewing_distance(grid: &Vec<Vec<usize>>, i: usize, j: usize) -> usize {
     let my_size = grid[i][j];
     let mut total = 1;
-    if i==0 || j==0 || i == grid.len()-1 || j == grid[0].len()-1 {
+    if i == 0 || j == 0 || i == grid.len() - 1 || j == grid[0].len() - 1 {
         return 0;
     }
     // Walk up
@@ -77,7 +80,7 @@ fn get_viewing_distance(grid: &Vec<Vec<usize>>, i: usize, j: usize) -> usize {
     while other_size < my_size {
         accumulator += 1;
         other_size = grid[curr_i][j];
-        if curr_i == grid.len()-1 {
+        if curr_i == grid.len() - 1 {
             break;
         } else {
             curr_i += 1;
@@ -105,14 +108,14 @@ fn get_viewing_distance(grid: &Vec<Vec<usize>>, i: usize, j: usize) -> usize {
     while other_size < my_size {
         accumulator += 1;
         other_size = grid[i][curr_j];
-        if curr_j == grid[0].len()-1 {
+        if curr_j == grid[0].len() - 1 {
             break;
         } else {
             curr_j += 1;
         }
     }
     total *= accumulator;
-    
+
     total
 }
 
@@ -128,11 +131,10 @@ fn main() {
         .map(|line| {
             line.unwrap()
                 .chars()
-                .map(|c| c.to_digit(10).unwrap() as usize + 1) // Adding 1 to everything so I can use 0 as my default                    
-                .collect::<Vec<usize>>()                       // for the 'largest' comparator later.
+                .map(|c| c.to_digit(10).unwrap() as usize + 1) // Adding 1 to everything so I can use 0 as my default
+                .collect::<Vec<usize>>() // for the 'largest' comparator later.
         })
         .collect::<Vec<Vec<usize>>>();
-    
 
     // Accumulate a list of co-ordinates of visible trees seen by looking
     // along rows of the grid
