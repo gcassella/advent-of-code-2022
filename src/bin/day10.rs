@@ -1,22 +1,25 @@
-use std::{fs::File, io::{self, BufRead}};
+use std::{
+    fs::File,
+    io::{self, BufRead},
+};
 
 enum Command {
     Noop,
-    Addx(i32)
+    Addx(i32),
 }
 
 // Increment the cycle counter. If we're at an output cycle return a value.
 fn advance_cycle(cycle: &mut usize, register: &i32) -> Option<i32> {
     if (register - (*cycle as i32 % 40)).abs() <= 1 {
         print!("#");
-    } else { 
+    } else {
         print!(".");
     }
-    if *cycle > 0 && (*cycle+1)%40 == 0 {
+    if *cycle > 0 && (*cycle + 1) % 40 == 0 {
         print!("\n");
     }
     *cycle += 1;
-    if (*cycle >= 20) && ((*cycle - 20)%40) == 0 {
+    if (*cycle >= 20) && ((*cycle - 20) % 40) == 0 {
         return Some(*register);
     }
     None
@@ -35,7 +38,7 @@ fn main() {
         let cmd = match input[0] {
             "noop" => Command::Noop,
             "addx" => Command::Addx(input[1].parse::<i32>().unwrap()),
-            _ => panic!("Malformed input")
+            _ => panic!("Malformed input"),
         };
         commands.push(cmd);
     }
@@ -46,32 +49,32 @@ fn main() {
     let mut seen: Vec<i32> = vec![];
     for cmd in commands.iter() {
         match cmd {
-            Command::Noop => { 
+            Command::Noop => {
                 // mid cycle 1
-                
+
                 match advance_cycle(&mut cycle, &register) {
                     Some(reg) => seen.push(cycle as i32 * reg),
-                    None => ()
+                    None => (),
                 }
                 // end cycle 1
-            },
+            }
             Command::Addx(val) => {
                 // mid cycle 1
                 match advance_cycle(&mut cycle, &register) {
                     Some(reg) => seen.push(cycle as i32 * reg),
-                    None => ()
+                    None => (),
                 }
                 // mid cycle 2
                 match advance_cycle(&mut cycle, &register) {
                     Some(reg) => seen.push(cycle as i32 * reg),
-                    None => ()
+                    None => (),
                 }
                 // end cycle 2
-                register += val; 
+                register += val;
             }
         }
     }
     print!("\n");
     println!("{:?}", seen);
-    println!("{:?}", seen.iter().fold(0, |a, b| a+b));
+    println!("{:?}", seen.iter().fold(0, |a, b| a + b));
 }

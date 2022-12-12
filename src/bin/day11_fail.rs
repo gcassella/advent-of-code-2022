@@ -2,10 +2,10 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::{
     collections::VecDeque,
+    f64,
     fs::File,
     io::{self, BufRead},
     ops,
-    f64
 };
 
 static BIGGY_BASE: usize = 1000;
@@ -13,7 +13,7 @@ static BIGGY_BASE: usize = 1000;
 #[derive(Debug)]
 struct BigInt {
     digits: Vec<usize>,
-    base: usize
+    base: usize,
 }
 
 impl BigInt {
@@ -26,8 +26,11 @@ impl BigInt {
             digits.push(digit);
             remainder -= digit * base.pow(i as u32);
         }
-        
-        BigInt { digits: digits.iter().rev().map(|x| *x).collect(), base }
+
+        BigInt {
+            digits: digits.iter().rev().map(|x| *x).collect(),
+            base,
+        }
     }
 
     fn is_zero(self) -> bool {
@@ -56,10 +59,14 @@ impl ops::Add<BigInt> for BigInt {
             // we use the isize cast here because n/m - 1 can be zero
             let lhs = if i as isize > n as isize - 1 {
                 0
-            } else { self.digits[i] };
+            } else {
+                self.digits[i]
+            };
             let rhs = if i as isize > m as isize - 1 {
                 0
-            } else { _rhs.digits[i] };
+            } else {
+                _rhs.digits[i]
+            };
             let d = lhs + rhs + carry;
             let digit = d % self.base;
             carry = d / self.base;
@@ -68,7 +75,10 @@ impl ops::Add<BigInt> for BigInt {
         if carry != 0 {
             digits.push(1);
         }
-        BigInt { digits, base: self.base }
+        BigInt {
+            digits,
+            base: self.base,
+        }
     }
 }
 
@@ -93,22 +103,25 @@ impl ops::Mul<BigInt> for BigInt {
         for m in 0..num_digits {
             if digits[m] >= self.base {
                 let digit = digits[m];
-                digits[m] = digit%self.base;
-                digits[m+1] += digit/self.base;
+                digits[m] = digit % self.base;
+                digits[m + 1] += digit / self.base;
             }
         }
-        let last_digit = digits[digits.len()-1].to_owned();
+        let last_digit = digits[digits.len() - 1].to_owned();
         // might not need highest order digit
         if last_digit == 0 {
             digits.pop();
         }
         // might need to carry highest order digit
         if last_digit > self.base {
-            let end = digits.len()-1;
-            digits[end] = last_digit%self.base;
-            digits.push(last_digit/self.base);
+            let end = digits.len() - 1;
+            digits[end] = last_digit % self.base;
+            digits.push(last_digit / self.base);
         }
-        BigInt { digits, base: self.base }
+        BigInt {
+            digits,
+            base: self.base,
+        }
     }
 }
 
@@ -128,8 +141,12 @@ impl ops::Sub<BigInt> for BigInt {
         let mut digits: Vec<usize> = vec![];
 
         for i in 0..max {
-            let other_digit = if i > _rhs.digits.len()-1 { 0 } else { _rhs.digits[i] };
-            carry = self.base-1+self.digits[i]-other_digit+carry/self.base;
+            let other_digit = if i > _rhs.digits.len() - 1 {
+                0
+            } else {
+                _rhs.digits[i]
+            };
+            carry = self.base - 1 + self.digits[i] - other_digit + carry / self.base;
             digits.push(carry % self.base);
         }
 
@@ -137,7 +154,10 @@ impl ops::Sub<BigInt> for BigInt {
             digits.pop();
         }
 
-        BigInt { digits, base: self.base }
+        BigInt {
+            digits,
+            base: self.base,
+        }
     }
 }
 
@@ -179,7 +199,7 @@ impl ops::Rem<BigInt> for BigInt {
         while remainder >= _rhs.clone() {
             let sub_operand = if n - m > i {
                 divisor += self.base.pow((n - m - i) as u32);
-                _rhs.clone()*BigInt::from(self.base.pow((n - m - i) as u32), self.base)
+                _rhs.clone() * BigInt::from(self.base.pow((n - m - i) as u32), self.base)
             } else {
                 divisor += 1;
                 _rhs.clone()
@@ -195,7 +215,10 @@ impl ops::Rem<BigInt> for BigInt {
 
 impl Clone for BigInt {
     fn clone(&self) -> Self {
-        Self { digits: self.digits.clone(), base: self.base }
+        Self {
+            digits: self.digits.clone(),
+            base: self.base,
+        }
     }
 }
 
@@ -360,33 +383,38 @@ fn main() {
             let mut target_buffer: Vec<usize> = vec![];
             while monkey.items.len() > 0 {
                 let mut item = monkey.items.pop_front().unwrap();
-                println!("  Monkey inspects an item with a worry level of {:?}.", item.clone());
+                println!(
+                    "  Monkey inspects an item with a worry level of {:?}.",
+                    item.clone()
+                );
                 monkey.inspections += 1;
                 println!("    Worry level becomes {:?}", (monkey.op)(item.clone()));
                 item = (monkey.op)(item.clone());
                 println!("    Worry level is divided by 3 to {:?}", item.clone());
                 item_buffer.push(item.clone());
-                let target = if (item.clone() % BigInt::from(monkey.test_divisor, BIGGY_BASE)).is_zero() {
-                    println!(
-                        "    Current worry level is divisible by {}.",
-                        monkey.test_divisor
-                    );
-                    println!(
-                        "    Item with worry level {:?} is thrown to monkey {}.",
-                        item.clone(), monkey.true_target
-                    );
-                    monkey.true_target
-                } else {
-                    println!(
-                        "    Current worry level is not divisible by {}.",
-                        monkey.test_divisor
-                    );
-                    println!(
-                        "    Item with worry level {:?} is thrown to monkey {}.",
-                        item, monkey.false_target
-                    );
-                    monkey.false_target
-                };
+                let target =
+                    if (item.clone() % BigInt::from(monkey.test_divisor, BIGGY_BASE)).is_zero() {
+                        println!(
+                            "    Current worry level is divisible by {}.",
+                            monkey.test_divisor
+                        );
+                        println!(
+                            "    Item with worry level {:?} is thrown to monkey {}.",
+                            item.clone(),
+                            monkey.true_target
+                        );
+                        monkey.true_target
+                    } else {
+                        println!(
+                            "    Current worry level is not divisible by {}.",
+                            monkey.test_divisor
+                        );
+                        println!(
+                            "    Item with worry level {:?} is thrown to monkey {}.",
+                            item, monkey.false_target
+                        );
+                        monkey.false_target
+                    };
                 target_buffer.push(target);
             }
             drop(monkey);

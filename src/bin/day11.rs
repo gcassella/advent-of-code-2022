@@ -153,7 +153,11 @@ fn main() {
         let monkey = Monkey::from_lines(lines);
         monkeys.push(monkey);
     }
-    let nrounds = 20;
+    // let nrounds = 20; // uncomment me for part 1
+    let nrounds = 10000;
+    // Find lowest monkey denominator
+    let divisors: Vec<usize> = monkeys.iter().map(|x| x.test_divisor).collect();
+    let lcm = divisors.iter().fold(1, |a, b| a * b);
     // Execute monkey loop
     for _ in 0..nrounds {
         for i in 0..monkeys.len() {
@@ -166,7 +170,8 @@ fn main() {
                 println!("  Monkey inspects an item with a worry level of {}.", item);
                 monkey.inspections += 1;
                 println!("    Worry level becomes {}", (monkey.op)(item));
-                item = (monkey.op)(item) / 3;
+                // item = (monkey.op)(item) / 3; // uncomment me for part 1
+                item = (monkey.op)(item) % lcm;
                 println!("    Worry level is divided by 3 to {}", item);
                 item_buffer.push(item);
                 let target = if item % monkey.test_divisor == 0 {
