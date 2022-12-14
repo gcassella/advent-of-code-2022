@@ -105,8 +105,12 @@ fn print_map(map: &Vec<Vec<bool>>) {
 
 
 /// Returns true if sand is added to the map succesfully, false otherwise (sand falls off).
+/// Also return false if sand gets stuck at the entry point
 fn drop_sand(map: &mut Vec<Vec<bool>>, entry_point: usize) -> bool {
     let mut curr_pos = (entry_point, 0);
+    if map[curr_pos.1][curr_pos.0] { // entry point blocked
+        return false
+    }
     loop {
         if map[curr_pos.1+1][curr_pos.0] { // cell below blocked
             if curr_pos.0 == 0 { // handle left boundary, fall off left
@@ -114,7 +118,7 @@ fn drop_sand(map: &mut Vec<Vec<bool>>, entry_point: usize) -> bool {
             }
             if map[curr_pos.1+1][curr_pos.0-1] { // cell left blocked
                 if curr_pos.0 == map[0].len() - 1 { // handle right boundary, fall off right
-                    return false
+
                 }
                 if map[curr_pos.1+1][curr_pos.0+1] { // cell right blocked, stick
                     map[curr_pos.1][curr_pos.0] = true;
@@ -172,25 +176,35 @@ fn main() {
         }
     }
     println!("x in ({}, {}), y in ({}, {})", x_min, x_max, y_min, y_max);
+
+    let height = 2 + y_max - y_min;
+    let width = height * 2 + (x_max - x_min);
+
     for line in all_lines.iter() {
-        walls.append(&mut parse_string_to_walls(&line, x_min, y_min));
+        walls.append(&mut parse_string_to_walls(&line, x_min - height, y_min));
     }
 
     // Loop over array of walls and construct map
-    let width = x_max - x_min;
-    let height = y_max - y_min;
     let mut map = vec![vec![false; width + 1]; height + 1];
     for wall in walls {
         println!("{:?}", wall);
         add_wall_to_map(&mut map, wall);
     }
+    // add infinite wall
+    add_wall_to_map(
+        &mut map,
+        Wall::Horizontal(
+            (0, height),
+            (width, height)
+        )
+    );
 
     //
     let mut units = 0;
-    let entry_point = 500 - x_min;
+    let entry_point = 500 - x_min + height;
     while drop_sand(&mut map, entry_point) {
         units += 1;
-        print_map(&map);
     }
+    print_map(&map);
     println!("{}", units);
 }
