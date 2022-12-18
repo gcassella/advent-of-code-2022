@@ -1,33 +1,24 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use lazy_static::lazy_static;
 use regex::Regex;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 #[derive(Debug)]
 enum Wall {
-    Horizontal(
-        (usize, usize),
-        (usize, usize)
-    ),
-    Vertical(
-        (usize, usize),
-        (usize, usize)
-    )
+    Horizontal((usize, usize), (usize, usize)),
+    Vertical((usize, usize), (usize, usize)),
 }
-
 
 /// a - b
 fn subtract_coord(a: (usize, usize), b: (usize, usize)) -> (usize, usize) {
     (a.0 - b.0, a.1 - b.1)
 }
 
-
 /// Given a string "\d,\d", return (usize, usize)
 fn parse_string_to_coord(input: &String) -> (usize, usize) {
     let vals: Vec<usize> = input.split(",").map(|x| x.parse().unwrap()).collect();
     (vals[0], vals[1])
 }
-
 
 fn parse_string_to_walls(input: &String, xoffset: usize, yoffset: usize) -> Vec<Wall> {
     let origin = (xoffset, yoffset);
@@ -49,46 +40,50 @@ fn parse_string_to_walls(input: &String, xoffset: usize, yoffset: usize) -> Vec<
         let peek_next_coord = coord_it.peek();
         let next_coord = match peek_next_coord.as_deref() {
             Some(&val) => val,
-            None => break
+            None => break,
         };
         if next_coord.0 == coord.0 {
             // Wall is vertical
             walls.push(Wall::Vertical(
                 subtract_coord(*coord, origin),
-                subtract_coord(*next_coord, origin)
-            )
-            );
+                subtract_coord(*next_coord, origin),
+            ));
         } else {
             // Wall is horizontal
             walls.push(Wall::Horizontal(
                 subtract_coord(*coord, origin),
-                subtract_coord(*next_coord, origin)
-            )
-            );
+                subtract_coord(*next_coord, origin),
+            ));
         }
     }
 
     walls
 }
 
-
 fn add_wall_to_map(map: &mut Vec<Vec<bool>>, wall: Wall) {
     match wall {
         Wall::Horizontal(start, end) => {
             let y = start.1;
-            for i in if start.0 < end.0 { start.0..end.0+1 } else { end.0..start.0+1 } {
+            for i in if start.0 < end.0 {
+                start.0..end.0 + 1
+            } else {
+                end.0..start.0 + 1
+            } {
                 map[y][i] = true;
             }
-        },
+        }
         Wall::Vertical(start, end) => {
             let x = start.0;
-            for i in if start.1 < end.1 { start.1..end.1+1 } else { end.1..start.1+1 } {
+            for i in if start.1 < end.1 {
+                start.1..end.1 + 1
+            } else {
+                end.1..start.1 + 1
+            } {
                 map[i][x] = true;
             }
         }
     }
 }
-
 
 fn print_map(map: &Vec<Vec<bool>>) {
     for row in map {
@@ -103,40 +98,45 @@ fn print_map(map: &Vec<Vec<bool>>) {
     }
 }
 
-
 /// Returns true if sand is added to the map succesfully, false otherwise (sand falls off).
 /// Also return false if sand gets stuck at the entry point
 fn drop_sand(map: &mut Vec<Vec<bool>>, entry_point: usize) -> bool {
     let mut curr_pos = (entry_point, 0);
-    if map[curr_pos.1][curr_pos.0] { // entry point blocked
-        return false
+    if map[curr_pos.1][curr_pos.0] {
+        // entry point blocked
+        return false;
     }
     loop {
-        if map[curr_pos.1+1][curr_pos.0] { // cell below blocked
-            if curr_pos.0 == 0 { // handle left boundary, fall off left
-                return false
+        if map[curr_pos.1 + 1][curr_pos.0] {
+            // cell below blocked
+            if curr_pos.0 == 0 {
+                // handle left boundary, fall off left
+                return false;
             }
-            if map[curr_pos.1+1][curr_pos.0-1] { // cell left blocked
+            if map[curr_pos.1 + 1][curr_pos.0 - 1] {
+                // cell left blocked
                 if curr_pos.0 == map[0].len() - 1 { // handle right boundary, fall off right
-
                 }
-                if map[curr_pos.1+1][curr_pos.0+1] { // cell right blocked, stick
+                if map[curr_pos.1 + 1][curr_pos.0 + 1] {
+                    // cell right blocked, stick
                     map[curr_pos.1][curr_pos.0] = true;
                     println!("Added sand at {} {}", curr_pos.0, curr_pos.1);
-                    return true
-                } else { // cell right unblocked, fall
-                    curr_pos = (curr_pos.0+1, curr_pos.1+1)
+                    return true;
+                } else {
+                    // cell right unblocked, fall
+                    curr_pos = (curr_pos.0 + 1, curr_pos.1 + 1)
                 }
-            } else { // cell left unblocked, fall
-                curr_pos = (curr_pos.0-1, curr_pos.1+1)
+            } else {
+                // cell left unblocked, fall
+                curr_pos = (curr_pos.0 - 1, curr_pos.1 + 1)
             }
-        } else { // cell below unblocked, fall
-            curr_pos = (curr_pos.0, curr_pos.1+1)
+        } else {
+            // cell below unblocked, fall
+            curr_pos = (curr_pos.0, curr_pos.1 + 1)
         }
     }
     true
 }
-
 
 fn main() {
     lazy_static! {
@@ -191,13 +191,7 @@ fn main() {
         add_wall_to_map(&mut map, wall);
     }
     // add infinite wall
-    add_wall_to_map(
-        &mut map,
-        Wall::Horizontal(
-            (0, height),
-            (width, height)
-        )
-    );
+    add_wall_to_map(&mut map, Wall::Horizontal((0, height), (width, height)));
 
     //
     let mut units = 0;

@@ -1,23 +1,22 @@
+use std::cmp::Ordering;
 use std::{
     collections::VecDeque,
     fs::File,
     io::{self, BufRead},
 };
-use std::cmp::Ordering;
 
 #[derive(Debug)]
 enum PacketEntry {
     List(VecDeque<PacketEntry>),
-    Integer(usize)
+    Integer(usize),
 }
-
 
 fn compare_packetentry(a: PacketEntry, b: PacketEntry) -> Option<bool> {
     match (a, b) {
         (PacketEntry::List(a_l), PacketEntry::List(b_l)) => compare_list_to_list(a_l, b_l),
         (PacketEntry::List(a_l), PacketEntry::Integer(b_i)) => compare_list_to_int(a_l, b_i),
         (PacketEntry::Integer(a_i), PacketEntry::List(b_l)) => compare_int_to_list(a_i, b_l),
-        (PacketEntry::Integer(a_i), PacketEntry::Integer(b_i)) => compare_int_to_int(a_i, b_i)
+        (PacketEntry::Integer(a_i), PacketEntry::Integer(b_i)) => compare_int_to_int(a_i, b_i),
     }
 }
 
@@ -31,46 +30,47 @@ fn compare_int_to_int(a: usize, b: usize) -> Option<bool> {
     }
 }
 
-
 fn compare_int_to_list(a: usize, b: VecDeque<PacketEntry>) -> Option<bool> {
     let a_l = convert_int_to_list(a);
     compare_list_to_list(a_l, b)
 }
-
 
 fn compare_list_to_int(a: VecDeque<PacketEntry>, b: usize) -> Option<bool> {
     let b_l = convert_int_to_list(b);
     compare_list_to_list(a, b_l)
 }
 
-
 fn convert_int_to_list(a: usize) -> VecDeque<PacketEntry> {
     let a_i = PacketEntry::Integer(a);
     VecDeque::from(vec![a_i])
 }
 
-
-fn compare_list_to_list(mut a: VecDeque<PacketEntry>, mut b: VecDeque<PacketEntry>) -> Option<bool> {
+fn compare_list_to_list(
+    mut a: VecDeque<PacketEntry>,
+    mut b: VecDeque<PacketEntry>,
+) -> Option<bool> {
     loop {
         // check we have items to compare
-        if a.len() == 0 { // either a exhausted first or both exhausted simultaneously
-            if b.len() == 0 { // both exhausted simultaneously
-                return None
+        if a.len() == 0 {
+            // either a exhausted first or both exhausted simultaneously
+            if b.len() == 0 {
+                // both exhausted simultaneously
+                return None;
             }
-            return Some(true)
-        } else if b.len() == 0 { // b exhausted first
-            return Some(false)
+            return Some(true);
+        } else if b.len() == 0 {
+            // b exhausted first
+            return Some(false);
         }
         // compare items
         let a_item = a.pop_front().unwrap();
         let b_item = b.pop_front().unwrap();
         match compare_packetentry(a_item, b_item) {
             Some(out) => return Some(out),
-            None => continue
+            None => continue,
         }
     }
 }
-
 
 fn parse_list_from_string(line: &String) -> PacketEntry {
     let mut out: VecDeque<PacketEntry> = VecDeque::from(vec![]);
@@ -88,23 +88,24 @@ fn parse_list_from_string(line: &String) -> PacketEntry {
                 if !consuming_interior {
                     // consume until closing bracket and make recursive list
                     consuming_interior = true;
-                    continue
+                    continue;
                 } else {
                     hanging_brackets += 1;
                 }
             }
             ']' => {
                 if consuming_interior {
-                    if hanging_brackets == 0 { // we are closing the consumption
+                    if hanging_brackets == 0 {
+                        // we are closing the consumption
                         out.push_back(parse_list_from_string(&interior.iter().collect::<String>()));
                         consuming_interior = false;
                         interior = vec![];
-                        continue
+                        continue;
                     } else {
                         hanging_brackets -= 1;
                     }
                 }
-            },
+            }
             ',' => {
                 if !consuming_interior {
                     if parsing_num {
@@ -124,7 +125,7 @@ fn parse_list_from_string(line: &String) -> PacketEntry {
                         current_num = char.to_digit(10).unwrap() as usize;
                     }
                 }
-            }// number
+            } // number
         }
         if consuming_interior {
             interior.push(char);
@@ -147,8 +148,8 @@ fn main() {
     // Split lines into pairs of packets
     let mut accumulator = 0;
     // Part 1
-    for i in 0..(all_lines.len()+1) / 3 {
-        let lines: Vec<&String> = all_lines[i*3..i*3+2].iter().collect();
+    for i in 0..(all_lines.len() + 1) / 3 {
+        let lines: Vec<&String> = all_lines[i * 3..i * 3 + 2].iter().collect();
 
         let l1 = parse_list_from_string(lines[0]);
         let l2 = parse_list_from_string(lines[1]);
@@ -156,10 +157,15 @@ fn main() {
         println!("{:?}", l2);
         match compare_packetentry(l1, l2) {
             Some(b) => match b {
-                true => { println!("Pair {} is in the right order", i+1); accumulator += i+1; },
-                false => { println!("Pair {} is not in the right order", i+1) }
+                true => {
+                    println!("Pair {} is in the right order", i + 1);
+                    accumulator += i + 1;
+                }
+                false => {
+                    println!("Pair {} is not in the right order", i + 1)
+                }
             },
-            None => unreachable!()
+            None => unreachable!(),
         }
         println!("--------------");
     }
@@ -170,20 +176,22 @@ fn main() {
     let indicator2 = String::from("[[6]]");
     cleaned_lines.push(&indicator1);
     cleaned_lines.push(&indicator2);
-    cleaned_lines.sort_by(|a, b| match compare_packetentry(parse_list_from_string(a), parse_list_from_string(b)) {
-        Some(b) => match b {
-            true => Ordering::Less,
-            false => Ordering::Greater,
-        },
-        None => unreachable!()
+    cleaned_lines.sort_by(|a, b| {
+        match compare_packetentry(parse_list_from_string(a), parse_list_from_string(b)) {
+            Some(b) => match b {
+                true => Ordering::Less,
+                false => Ordering::Greater,
+            },
+            None => unreachable!(),
+        }
     });
 
     for (i, line) in cleaned_lines.iter().enumerate() {
         if line == &&String::from("[[2]]") {
-            println!("Indicator 1 at position {}", i+1);
+            println!("Indicator 1 at position {}", i + 1);
         }
         if line == &&String::from("[[6]]") {
-            println!("Indicator 2 at position {}", i+1);
+            println!("Indicator 2 at position {}", i + 1);
         }
     }
 }
