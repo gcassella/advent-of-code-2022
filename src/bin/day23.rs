@@ -1,31 +1,32 @@
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-fn check_n(elf: &(isize, isize), elves: &Vec<(isize, isize)>) -> bool {
+fn check_n(elf: &(isize, isize), elves: &HashSet<(isize, isize)>) -> bool {
     return !(elves.contains(&(elf.0 - 1, elf.1))
         || elves.contains(&(elf.0 - 1, elf.1 - 1))
         || elves.contains(&(elf.0 - 1, elf.1 + 1)));
 }
 
-fn check_s(elf: &(isize, isize), elves: &Vec<(isize, isize)>) -> bool {
+fn check_s(elf: &(isize, isize), elves: &HashSet<(isize, isize)>) -> bool {
     return !(elves.contains(&(elf.0 + 1, elf.1))
         || elves.contains(&(elf.0 + 1, elf.1 - 1))
         || elves.contains(&(elf.0 + 1, elf.1 + 1)));
 }
 
-fn check_w(elf: &(isize, isize), elves: &Vec<(isize, isize)>) -> bool {
+fn check_w(elf: &(isize, isize), elves: &HashSet<(isize, isize)>) -> bool {
     return !(elves.contains(&(elf.0, elf.1 - 1))
         || elves.contains(&(elf.0 - 1, elf.1 - 1))
         || elves.contains(&(elf.0 + 1, elf.1 - 1)));
 }
 
-fn check_e(elf: &(isize, isize), elves: &Vec<(isize, isize)>) -> bool {
+fn check_e(elf: &(isize, isize), elves: &HashSet<(isize, isize)>) -> bool {
     return !(elves.contains(&(elf.0, elf.1 + 1))
         || elves.contains(&(elf.0 - 1, elf.1 + 1))
         || elves.contains(&(elf.0 + 1, elf.1 + 1)));
 }
 
-fn check_all(elf: &(isize, isize), elves: &Vec<(isize, isize)>) -> bool {
+fn check_all(elf: &(isize, isize), elves: &HashSet<(isize, isize)>) -> bool {
     check_s(elf, elves) && check_n(elf, elves) && check_e(elf, elves) && check_w(elf, elves)
 }
 
@@ -55,65 +56,72 @@ fn main() {
     let filebuf = BufReader::new(file);
     let all_lines: Vec<String> = filebuf.lines().map(|x| x.unwrap()).collect();
     //
-    let mut elves: Vec<(isize, isize)> = vec![];
+    let mut elves: HashSet<(isize, isize)> = HashSet::new();
     for (i, line) in all_lines.iter().enumerate() {
         for (j, char) in line.chars().enumerate() {
             if char == '#' {
-                elves.push((i as isize, j as isize));
+                elves.insert((i as isize, j as isize));
             }
         }
     }
 
-    let checks: Vec<fn(&(isize, isize), &Vec<(isize, isize)>) -> bool> =
+    let checks: Vec<fn(&(isize, isize), &HashSet<(isize, isize)>) -> bool> =
         vec![check_n, check_s, check_w, check_e];
     let dirs: Vec<(isize, isize)> = vec![(-1, 0), (1, 0), (0, -1), (0, 1)];
     // iterate
     // part 1
-    for i in 0..10 {
-        let old_elves = elves.clone();
-        let mut new_elves: Vec<(isize, isize)> = vec![];
-        'outer: for elf in elves.iter_mut() {
-            if check_all(elf, &old_elves) {
-                new_elves.push(*elf);
+    // for i in 0..10 {
+    // part 2
+    let mut i = 0;
+    loop {
+        let mut new_elves: HashSet<(isize, isize)> = HashSet::new();
+        'outer: for elf in elves.iter() {
+            if check_all(elf, &elves) {
+                new_elves.insert(*elf);
                 continue;
             } else {
                 for j in 0..4 {
-                    if (checks[(i + j) % 4])(&elf, &old_elves) {
+                    if (checks[(i + j) % 4])(&elf, &elves) {
                         let new_elf = (elf.0 + dirs[(i + j) % 4].0, elf.1 + dirs[(i + j) % 4].1);
-                        new_elves.push(new_elf);
+                        if !new_elves.insert(new_elf) {
+                            // insert was rejected, reset other elf and this elf
+                            new_elves.insert(*elf);
+                            new_elves.remove(&new_elf);
+                            let old_elf = (
+                                new_elf.0 + dirs[(i + j) % 4].0,
+                                new_elf.1 + dirs[(i + j) % 4].1,
+                            );
+                            new_elves.insert(old_elf);
+                        };
                         continue 'outer;
                     }
                 }
-                new_elves.push(*elf);
+                new_elves.insert(*elf);
             }
         }
 
-        // check for duplicate moves
-        let mut checked_elves = new_elves.clone();
-        for (j, elf) in new_elves.iter().enumerate() {
-            for (k, other_elf) in new_elves.iter().enumerate() {
-                if j == k {
-                    continue;
-                } else if *elf == *other_elf {
-                    // cancel move
-                    checked_elves[j] = old_elves[j];
-                }
-            }
+        if new_elves == elves {
+            println!("No elves moved on round {}", i + 1);
+            break;
         }
-
-        elves = checked_elves;
+        elves = new_elves;
+        i += 1;
     }
 
     // sort by row
-    elves.sort_by(|a, b| a.0.cmp(&b.0));
-    let min_row = elves[0].0;
-    let max_row = elves.last().unwrap().0;
+    let mut sorted_elves = elves.into_iter().collect::<Vec<(isize, isize)>>();
+    sorted_elves.sort_by(|a, b| a.0.cmp(&b.0));
+    let min_row = sorted_elves[0].0;
+    let max_row = sorted_elves.last().unwrap().0;
     let width = max_row - min_row;
-    elves.sort_by(|a, b| a.1.cmp(&b.1));
-    let min_col = elves[0].1;
-    let max_col = elves.last().unwrap().1;
+    sorted_elves.sort_by(|a, b| a.1.cmp(&b.1));
+    let min_col = sorted_elves[0].1;
+    let max_col = sorted_elves.last().unwrap().1;
     let height = max_col - min_col;
-    print_elves(min_row, max_row, min_col, max_col, &elves);
+    print_elves(min_row, max_row, min_col, max_col, &sorted_elves);
 
-    println!("{}", (height + 1) * (width + 1) - elves.len() as isize);
+    println!(
+        "{}",
+        (height + 1) * (width + 1) - sorted_elves.len() as isize
+    );
 }
